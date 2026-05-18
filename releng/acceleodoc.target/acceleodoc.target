@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?>
+<!--
+  Target Platform Definition for acceleodoc
+
+  Defines all Eclipse dependencies required to build and run acceleodoc.
+  Uses the same P2 repositories as ucmism2t for consistency:
+    - Eclipse 2025-12 (platform, EMF, Equinox)
+    - Acceleo 4.2 R202602100910 (AQL engine)
+
+  Freemarker is NOT listed here — it is bundled as a wrapped JAR
+  inside acceleodoc.core/lib/ and declared via Bundle-ClassPath.
+-->
+<target name="acceleodoc Target Platform" sequenceNumber="1">
+    <locations>
+        <!--
+          Eclipse 2025-12 Release
+
+          Provides:
+            - Eclipse Platform (OSGi runtime, IProgressMonitor, etc.)
+            - EMF Core (EObject, ResourceSet, URI)
+            - Equinox (IApplication, launcher)
+            - Eclipse UI (IWorkbenchWindow, IProject, IFile for Eclipse plugin)
+            - Eclipse Core Resources (IProject, IResource, IFile)
+        -->
+        <location includeAllPlatforms="false"
+                  includeConfigurePhase="true"
+                  includeMode="planner"
+                  includeSource="true"
+                  type="InstallableUnit">
+            <repository location="https://download.eclipse.org/releases/2025-12/"/>
+
+            <!-- Core Eclipse Platform -->
+            <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
+
+            <!-- EMF Core -->
+            <unit id="org.eclipse.emf.ecore.feature.group" version="0.0.0"/>
+            <unit id="org.eclipse.emf.common.feature.group" version="0.0.0"/>
+            <unit id="org.eclipse.emf.ecore.xmi" version="0.0.0"/>
+
+            <!-- Equinox runtime -->
+            <unit id="org.eclipse.equinox.launcher" version="0.0.0"/>
+            <unit id="org.eclipse.equinox.app" version="0.0.0"/>
+            <unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
+
+            <!-- Eclipse Core Resources (IProject, IFile, IResource) -->
+            <unit id="org.eclipse.core.resources" version="0.0.0"/>
+            <unit id="org.eclipse.core.runtime" version="0.0.0"/>
+
+            <!-- Eclipse UI (for context menu actions) -->
+            <unit id="org.eclipse.ui.ide" version="0.0.0"/>
+            <unit id="org.eclipse.ui" version="0.0.0"/>
+        </location>
+
+        <!--
+          Acceleo 4.2 Release (R202602100910)
+
+          Provides the AQL-based Acceleo 4.x AST API:
+            - org.eclipse.acceleo.aql  (AcceleoParser, AST nodes)
+            - org.eclipse.acceleo.query (AQL runtime, IQualifiedNameResolver)
+
+          Transitive dependencies (parser internals, etc.) are resolved
+          automatically by Tycho from this P2 repository.
+        -->
+        <location includeAllPlatforms="false"
+                  includeConfigurePhase="true"
+                  includeMode="planner"
+                  includeSource="true"
+                  type="InstallableUnit">
+            <repository location="https://download.eclipse.org/acceleo/updates/releases/4.2/R202602100910/"/>
+
+            <!-- Acceleo 4.2 AQL engine -->
+            <unit id="org.eclipse.acceleo.aql" version="0.0.0"/>
+
+            <!-- AQL query language runtime -->
+            <unit id="org.eclipse.acceleo.query" version="0.0.0"/>
+        </location>
+    </locations>
+</target>

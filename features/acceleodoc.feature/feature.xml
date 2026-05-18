@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="acceleodoc.feature"
+      label="acceleodoc Feature"
+      version="1.0.0.qualifier"
+      provider-name="UCMIS">
+   <description>acceleodoc — Javadoc-style HTML documentation generator for Acceleo 4.2 projects.</description>
+   <copyright>Copyright (c) 2025 UCMIS</copyright>
+   <license>This software is provided "as is" without warranty of any kind.</license>
+   <plugin id="acceleodoc.core"    download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="acceleodoc.cli"     download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="acceleodoc.eclipse" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+</feature>

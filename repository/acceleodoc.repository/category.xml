@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+    <feature url="features/acceleodoc.feature_1.0.0.qualifier.jar"
+             id="acceleodoc.feature"
+             version="1.0.0.qualifier">
+        <category name="acceleodoc"/>
+    </feature>
+    <category-def name="acceleodoc" label="acceleodoc — Acceleo Documentation Generator"/>
+</site>

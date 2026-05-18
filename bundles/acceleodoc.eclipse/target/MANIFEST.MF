@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: acceleodoc Eclipse Integration
+Bundle-SymbolicName: acceleodoc.eclipse;singleton:=true
+Bundle-Version: 1.0.0.202605171628
+Bundle-Vendor: UCMIS
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: acceleodoc.eclipse
+Bundle-Activator: acceleodoc.eclipse.Activator
+Require-Bundle: acceleodoc.core;bundle-version="1.0.0",org.eclipse.core.
+ runtime;bundle-version="[3.30.0,4.0.0)",org.eclipse.core.resources;bund
+ le-version="[3.20.0,4.0.0)",org.eclipse.ui;bundle-version="[3.206.0,4.0
+ .0)",org.eclipse.ui.ide;bundle-version="[3.22.0,4.0.0)",org.eclipse.jfa
+ ce;bundle-version="[3.33.0,4.0.0)"
+Export-Package: acceleodoc.eclipse
+

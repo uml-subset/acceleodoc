@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Context menu action — Project level
+         Appears when right-clicking any Eclipse project.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <extension point="org.eclipse.ui.popupMenus">
+
+        <!-- Action on IProject (project node in Project Explorer) -->
+        <objectContribution
+            id="acceleodoc.eclipse.projectAction"
+            objectClass="org.eclipse.core.resources.IProject"
+            adaptable="true">
+            <action
+                id="acceleodoc.eclipse.generateDocsFromProject"
+                label="Generate Acceleo Documentation"
+                tooltip="Generate Javadoc-style HTML documentation from .mtl files"
+                class="acceleodoc.eclipse.action.GenerateDocsAction"
+                menubarPath="additions"
+                enablesFor="+">
+            </action>
+        </objectContribution>
+
+        <!-- Action on IFile (individual .mtl file) -->
+        <objectContribution
+            id="acceleodoc.eclipse.mtlFileAction"
+            objectClass="org.eclipse.core.resources.IFile"
+            adaptable="true"
+            nameFilter="*.mtl">
+            <action
+                id="acceleodoc.eclipse.generateDocsFromFile"
+                label="Generate Acceleo Documentation"
+                tooltip="Generate Javadoc-style HTML documentation from this .mtl file"
+                class="acceleodoc.eclipse.action.GenerateDocsAction"
+                menubarPath="additions"
+                enablesFor="+">
+            </action>
+        </objectContribution>
+
+    </extension>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Project Builder — disabled by default, enabled per-project
+         via Project Properties > acceleodoc > Enable automatic generation.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <extension
+        id="acceleodoc.eclipse.builder"
+        point="org.eclipse.core.resources.builders"
+        name="Acceleo Documentation Builder">
+        <builder
+            hasNature="false"
+            callOnEmptyDelta="false"
+            isConfigurable="true">
+            <run class="acceleodoc.eclipse.builder.AcceleoDocBuilder"/>
+        </builder>
+    </extension>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Project Property Page — "Acceleo Documentation"
+         Allows enabling the builder and configuring the output folder
+         per-project via Project > Properties > Acceleo Documentation.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <extension point="org.eclipse.ui.propertyPages">
+        <page
+            id="acceleodoc.eclipse.propertyPage"
+            name="Acceleo Documentation"
+            class="acceleodoc.eclipse.ui.AcceleoDocPropertyPage"
+            objectClass="org.eclipse.core.resources.IProject"
+            adaptable="true">
+        </page>
+    </extension>
+
+</plugin>

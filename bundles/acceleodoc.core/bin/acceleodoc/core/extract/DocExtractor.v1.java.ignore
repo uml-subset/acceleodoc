@@ -1,0 +1,250 @@
+package acceleodoc.core.extract;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.eclipse.acceleo.Block;
+import org.eclipse.acceleo.Module;
+import org.eclipse.acceleo.ModuleElement;
+import org.eclipse.acceleo.Query;
+import org.eclipse.acceleo.Template;
+import org.eclipse.acceleo.Variable;
+import org.eclipse.acceleo.aql.parser.AcceleoParser;
+import org.eclipse.acceleo.aql.parser.AcceleoAstResult;
+
+import acceleodoc.core.ast.ModuleDoc;
+import acceleodoc.core.ast.ParamDoc;
+import acceleodoc.core.ast.QueryDoc;
+import acceleodoc.core.ast.TemplateDoc;
+import acceleodoc.core.util.DocCommentParser;
+
+/**
+ * Scans a source folder for {@code .mtl} files, parses each one using the
+ * Acceleo 4.x AQL {@link AcceleoParser}, and extracts a {@link ModuleDoc}
+ * from every parsed {@link Module}.
+ *
+ * <p>Only {@code [** ... *&#47;]} documentation comments are processed.
+ * {@code [comment ... /]} blocks are ignored for documentation purposes.</p>
+ *
+ * <h2>Usage</h2>
+ * <pre>{@code
+ * DocExtractor extractor = new DocExtractor();
+ * List<ModuleDoc> docs = extractor.extractAll(Path.of("/path/to/src"));
+ * }</pre>
+ */
+public class DocExtractor {
+
+    private final AcceleoParser parser;
+
+    public DocExtractor() {
+        this.parser = new AcceleoParser();
+    }
+
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Recursively scans {@code sourceRoot} for {@code .mtl} files and
+     * extracts a {@link ModuleDoc} from each one.
+     *
+     * @param sourceRoot root directory containing {@code .mtl} files
+     * @return list of extracted module documentation objects (never null)
+     * @throws IOException if the directory cannot be walked
+     */
+    public List<ModuleDoc> extractAll(Path sourceRoot) throws IOException {
+        List<ModuleDoc> result = new ArrayList<>();
+        try (Stream<Path> walk = Files.walk(sourceRoot)) {
+            walk.filter(p -> p.toString().endsWith(".mtl"))
+                .forEach(mtlPath -> {
+                    try {
+                        ModuleDoc doc = extractOne(mtlPath, sourceRoot);
+                        if (doc != null) {
+                            result.add(doc);
+                        }
+                    } catch (IOException e) {
+                        System.err.println("[acceleodoc] Warning: could not parse " + mtlPath + ": " + e.getMessage());
+                    }
+                });
+        }
+        return result;
+    }
+
+    /**
+     * Parses a single {@code .mtl} file and returns its {@link ModuleDoc}.
+     *
+     * @param mtlPath    path to the {@code .mtl} file
+     * @param sourceRoot root used to derive the relative file path for display
+     * @return extracted documentation, or {@code null} if parsing failed fatally
+     * @throws IOException if the file cannot be read
+     */
+    public ModuleDoc extractOne(Path mtlPath, Path sourceRoot) throws IOException {
+        String source = Files.readString(mtlPath);
+        String relativePath = sourceRoot.relativize(mtlPath).toString();
+
+        // Derive the qualified name from the file path
+        // e.g. src/ucmism2t/templates/m2t.mtl -> ucmism2t::templates::m2t
+        String qualifiedName = deriveQualifiedName(relativePath);
+
+        AcceleoAstResult astResult = parser.parse(source, qualifiedName, null);
+
+        if (astResult == null || astResult.getModule() == null) {
+            System.err.println("[acceleodoc] Warning: null AST for " + mtlPath);
+            return null;
+        }
+
+        if (!astResult.getErrors().isEmpty()) {
+            astResult.getErrors().forEach(err ->
+                System.err.println("[acceleodoc] Parse warning in " + relativePath + ": " + err));
+        }
+
+        return extractModule(astResult.getModule(), relativePath, qualifiedName);
+    }
+
+    // -------------------------------------------------------------------------
+    // Module extraction
+    // -------------------------------------------------------------------------
+
+    private ModuleDoc extractModule(Module module, String relativePath, String qualifiedName) {
+        // Parse the module-level documentation block
+        DocCommentParser.DocComment moduleDoc = DocCommentParser.parse(
+                module.getDocumentation() != null ? module.getDocumentation().getBody() : null);
+
+        // Extract metamodel URIs from the module header
+        List<String> metamodels = module.getMetamodels().stream()
+                .map(mm -> mm.getReferencedPackage() != null
+                        ? mm.getReferencedPackage().getNsURI()
+                        : mm.getValue())
+                .toList();
+
+        List<TemplateDoc> templates = new ArrayList<>();
+        List<QueryDoc> queries = new ArrayList<>();
+
+        for (ModuleElement element : module.getModuleElements()) {
+            if (element instanceof Template template) {
+                templates.add(extractTemplate(template));
+            } else if (element instanceof Query query) {
+                queries.add(extractQuery(query));
+            }
+        }
+
+        return ModuleDoc.builder()
+                .name(module.getName())
+                .qualifiedName(qualifiedName)
+                .sourceFile(relativePath)
+                .description(moduleDoc.description())
+                .author(moduleDoc.tag("author"))
+                .version(moduleDoc.tag("version"))
+                .deprecated(moduleDoc.tag("deprecated"))
+                .see(moduleDoc.tag("see"))
+                .metamodels(metamodels)
+                .templates(templates)
+                .queries(queries)
+                .build();
+    }
+
+    // -------------------------------------------------------------------------
+    // Template extraction
+    // -------------------------------------------------------------------------
+
+    private TemplateDoc extractTemplate(Template template) {
+        DocCommentParser.DocComment doc = DocCommentParser.parse(
+                template.getDocumentation() != null ? template.getDocumentation().getBody() : null);
+
+        List<ParamDoc> params = extractParams(template.getParameters(), doc);
+
+        // Detect @main annotation
+        boolean isMain = template.isIsMain();
+
+        // Detect override (template has a guard or overrides condition is non-null in some AST versions)
+        boolean isOverride = template.getOverrides() != null && !template.getOverrides().isEmpty();
+
+        return TemplateDoc.builder()
+                .name(template.getName())
+                .visibility(template.getVisibility() != null ? template.getVisibility().getName() : "public")
+                .description(doc.description())
+                .params(params)
+                .deprecated(doc.tag("deprecated"))
+                .see(doc.tag("see"))
+                .author(doc.tag("author"))
+                .version(doc.tag("version"))
+                .main(isMain)
+                .override(isOverride)
+                .build();
+    }
+
+    // -------------------------------------------------------------------------
+    // Query extraction
+    // -------------------------------------------------------------------------
+
+    private QueryDoc extractQuery(Query query) {
+        DocCommentParser.DocComment doc = DocCommentParser.parse(
+                query.getDocumentation() != null ? query.getDocumentation().getBody() : null);
+
+        List<ParamDoc> params = extractParams(query.getParameters(), doc);
+
+        // Resolve return type from AQL type expression
+        String returnType = query.getType() != null ? query.getType().toString() : "";
+
+        return QueryDoc.builder()
+                .name(query.getName())
+                .visibility(query.getVisibility() != null ? query.getVisibility().getName() : "public")
+                .description(doc.description())
+                .params(params)
+                .returnType(returnType)
+                .returnDescription(doc.tag("return"))
+                .deprecated(doc.tag("deprecated"))
+                .see(doc.tag("see"))
+                .author(doc.tag("author"))
+                .version(doc.tag("version"))
+                .build();
+    }
+
+    // -------------------------------------------------------------------------
+    // Parameter extraction (shared by template + query)
+    // -------------------------------------------------------------------------
+
+    private List<ParamDoc> extractParams(List<Variable> variables, DocCommentParser.DocComment doc) {
+        return variables.stream()
+                .map(var -> new ParamDoc(
+                        var.getName(),
+                        var.getType() != null ? var.getType().toString() : "",
+                        doc.paramDescription(var.getName())))
+                .toList();
+    }
+
+    // -------------------------------------------------------------------------
+    // Qualified name derivation
+    // -------------------------------------------------------------------------
+
+    /**
+     * Derives an Acceleo qualified name from a relative file path.
+     *
+     * <p>Examples:
+     * <ul>
+     *   <li>{@code ucmism2t/templates/m2t.mtl} → {@code ucmism2t::templates::m2t}</li>
+     *   <li>{@code src/ucmism2t/queries/helpers.mtl} → {@code ucmism2t::queries::helpers}
+     *       (leading {@code src/} segment is stripped)</li>
+     * </ul>
+     */
+    private String deriveQualifiedName(String relativePath) {
+        String path = relativePath.replace(File.separatorChar, '/');
+        // Strip common source prefixes
+        for (String prefix : List.of("src/", "source/", "templates/")) {
+            if (path.startsWith(prefix)) {
+                path = path.substring(prefix.length());
+                break;
+            }
+        }
+        // Remove .mtl extension and replace / with ::
+        if (path.endsWith(".mtl")) {
+            path = path.substring(0, path.length() - 4);
+        }
+        return path.replace('/', ':').replace(':', ':');
+    }
+}

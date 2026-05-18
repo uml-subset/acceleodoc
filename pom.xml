@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Parent POM for acceleodoc project
+
+  acceleodoc is a Javadoc-style documentation generator for Acceleo 4.2 projects.
+  It parses .mtl files using the Acceleo 4.x AQL-based AST API and generates
+  multi-page HTML documentation from [** ... */] documentation comments.
+
+  Runtime modes:
+    - Eclipse plugin: context menu action + optional project builder
+    - CLI: standalone execution via IApplication / static main()
+
+  Build command: mvn clean verify
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ucmis</groupId>
+    <artifactId>acceleodoc-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>acceleodoc Parent</name>
+    <description>Javadoc-style HTML documentation generator for Acceleo 4.2 projects</description>
+
+    <properties>
+        <tycho.version>5.0.0</tycho.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
+        <build.platform>linux</build.platform>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+    <modules>
+        <module>releng/acceleodoc.target</module>
+        <module>bundles/acceleodoc.core</module>
+        <module>bundles/acceleodoc.cli</module>
+        <module>bundles/acceleodoc.eclipse</module>
+        <module>features/acceleodoc.feature</module>
+        <module>releng/acceleodoc.product</module>
+        <module>repository/acceleodoc.repository</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-maven-plugin</artifactId>
+                <version>${tycho.version}</version>
+                <extensions>true</extensions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>target-platform-configuration</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <target>
+                        <artifact>
+                            <groupId>ucmis</groupId>
+                            <artifactId>acceleodoc.target</artifactId>
+                            <version>1.0.0-SNAPSHOT</version>
+                        </artifact>
+                    </target>
+                    <environments/>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-compiler-plugin</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <release>21</release>
+                    <useProjectSettings>false</useProjectSettings>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>platform-linux</id>
+            <activation>
+                <property><name>build.platform</name><value>linux</value></property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.eclipse.tycho</groupId>
+                            <artifactId>target-platform-configuration</artifactId>
+                            <configuration>
+                                <environments>
+                                    <environment>
+                                        <os>linux</os><ws>gtk</ws><arch>x86_64</arch>
+                                    </environment>
+                                </environments>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <profile>
+            <id>platform-windows</id>
+            <activation>
+                <property><name>build.platform</name><value>windows</value></property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.eclipse.tycho</groupId>
+                            <artifactId>target-platform-configuration</artifactId>
+                            <configuration>
+                                <environments>
+                                    <environment>
+                                        <os>win32</os><ws>win32</ws><arch>x86_64</arch>
+                                    </environment>
+                                </environments>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <profile>
+            <id>platform-macos-x86</id>
+            <activation>
+                <property><name>build.platform</name><value>macos-x86</value></property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.eclipse.tycho</groupId>
+                            <artifactId>target-platform-configuration</artifactId>
+                            <configuration>
+                                <environments>
+                                    <environment>
+                                        <os>macosx</os><ws>cocoa</ws><arch>x86_64</arch>
+                                    </environment>
+                                </environments>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <profile>
+            <id>platform-macos-arm</id>
+            <activation>
+                <property><name>build.platform</name><value>macos-arm</value></property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.eclipse.tycho</groupId>
+                            <artifactId>target-platform-configuration</artifactId>
+                            <configuration>
+                                <environments>
+                                    <environment>
+                                        <os>macosx</os><ws>cocoa</ws><arch>aarch64</arch>
+                                    </environment>
+                                </environments>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <profile>
+            <id>platform-all</id>
+            <activation>
+                <property><name>build.platform</name><value>all</value></property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.eclipse.tycho</groupId>
+                            <artifactId>target-platform-configuration</artifactId>
+                            <configuration>
+                                <environments>
+                                    <environment>
+                                        <os>linux</os><ws>gtk</ws><arch>x86_64</arch>
+                                    </environment>
+                                    <environment>
+                                        <os>win32</os><ws>win32</ws><arch>x86_64</arch>
+                                    </environment>
+                                    <environment>
+                                        <os>macosx</os><ws>cocoa</ws><arch>x86_64</arch>
+                                    </environment>
+                                    <environment>
+                                        <os>macosx</os><ws>cocoa</ws><arch>aarch64</arch>
+                                    </environment>
+                                </environments>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+<product
+    name="acceleodoc"
+    id="acceleodoc.cli.app"
+    application="acceleodoc.cli.app"
+    version="1.0.0.qualifier"
+    type="mixed"
+    includeLaunchers="true">
+
+    <aboutInfo>
+        <text>acceleodoc 1.0.0 — Acceleo Documentation Generator
+Copyright (c) 2025 UCMIS</text>
+    </aboutInfo>
+
+    <configIni use="default"/>
+    <launcherArgs>
+        <programArgs>-consoleLog</programArgs>
+        <vmArgs>-Xms64m -Xmx512m</vmArgs>
+    </launcherArgs>
+
+    <launcher name="acceleodoc">
+        <solaris/>
+        <win useIco="false"/>
+    </launcher>
+
+    <features>
+        <feature id="acceleodoc.feature"/>
+        <feature id="org.eclipse.platform"/>
+        <feature id="org.eclipse.equinox.executable"/>
+    </features>
+
+</product>
