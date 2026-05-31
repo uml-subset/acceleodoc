@@ -16,6 +16,7 @@ import org.eclipse.acceleo.ModuleElementDocumentation;
 import org.eclipse.acceleo.ParameterDocumentation;
 import org.eclipse.acceleo.Query;
 import org.eclipse.acceleo.Template;
+import org.eclipse.acceleo.TypedElement;
 import org.eclipse.acceleo.Variable;
 import org.eclipse.acceleo.aql.parser.AcceleoAstResult;
 import org.eclipse.acceleo.aql.parser.AcceleoParser;
@@ -32,7 +33,7 @@ import acceleodoc.core.util.DocCommentParser;
  * Acceleo 4.x AQL {@link AcceleoParser}, and extracts a {@link ModuleDoc}
  * from every parsed {@link Module}.
  *
- * <h2>AST documentation model (from AcceleoPackage)</h2>
+ * <h2>AST documentation model</h2>
  * <p>The Acceleo 4.x metamodel uses two distinct documentation types:</p>
  * <ul>
  *   <li>{@link ModuleDocumentation} — attached to a {@link Module} via
@@ -47,10 +48,23 @@ import acceleodoc.core.util.DocCommentParser;
  *       declaration order, each with its text in
  *       {@code getBody().getValue()}.</li>
  * </ul>
- * <p>The body text in all cases is a {@link CommentBody} node whose
- * {@code getValue()} returns the raw comment text including any
- * {@code @tag} lines. {@link DocCommentParser} is used to split this
- * into a structured {@link DocComment}.</p>
+ *
+ * <h2>Type extraction</h2>
+ * <p>{@link TypedElement#getType()} returns an
+ * {@link org.eclipse.acceleo.query.parser.AstResult} whose root AST node
+ * is resolved as follows:</p>
+ * <ul>
+ *   <li>{@link org.eclipse.acceleo.query.ast.CollectionTypeLiteral} —
+ *       collection types: {@code OrderedSet} (java.util.Set) and
+ *       {@code Sequence} (java.util.List). Element type resolved
+ *       recursively via {@code getElementType()}.</li>
+ *   <li>{@link org.eclipse.acceleo.query.ast.EClassifierTypeLiteral} —
+ *       EMF classifier types such as {@code uml::Model}. Package and
+ *       classifier name available as plain strings.</li>
+ *   <li>{@link org.eclipse.acceleo.query.ast.ClassTypeLiteral} —
+ *       Java/AQL primitive types: {@code String}, {@code Boolean},
+ *       {@code Integer}, {@code Real}.</li>
+ * </ul>
  */
 public class DocExtractor {
 
@@ -132,7 +146,8 @@ public class DocExtractor {
                     + relativePath);
             return null;
         }
-    	String description = "";
+
+        String description = "";
         String author      = null;
         String version     = null;
         String deprecated  = null;
@@ -143,8 +158,7 @@ public class DocExtractor {
             author  = nullIfBlank(modDoc.getAuthor());
             version = nullIfBlank(modDoc.getVersion());
 
-            // Free-text body may still contain @deprecated and @see —
-            // parse those out via DocCommentParser
+            // Free-text body may still contain @deprecated and @see
             DocComment parsed = DocCommentParser.parse(bodyValue(modDoc.getBody()));
             description = parsed.description();
             deprecated  = parsed.tag("deprecated");
@@ -158,18 +172,6 @@ public class DocExtractor {
                 metamodels.add(uri);
             }
         }
-//        List<String> metamodels = new ArrayList<>();
-//        for (org.eclipse.acceleo.Metamodel mm : module.getMetamodels()) {
-//            org.eclipse.emf.ecore.EPackage pkg = mm.getReferencedPackage();
-//            if (pkg != null && pkg.getNsURI() != null && !pkg.getNsURI().isBlank()) {
-//                metamodels.add(pkg.getNsURI());
-//            }
-//        }
-//        List<String> metamodels = module.getMetamodels().stream()
-//                .map(mm -> mm.getReferencedPackage() != null
-//                        ? mm.getReferencedPackage().getNsURI() : "")
-//                .filter(s -> !s.isBlank())
-//                .toList();
 
         List<TemplateDoc> templates = new ArrayList<>();
         List<QueryDoc>    queries   = new ArrayList<>();
@@ -201,42 +203,45 @@ public class DocExtractor {
     // Template extraction
     // -------------------------------------------------------------------------
 
-	private TemplateDoc extractTemplate(Template template) {
-	    String description = "";
-	    String deprecated  = null;
-	    String see         = null;
-	    String author      = null;
-	    String version     = null;
-	    List<ParamDoc> params;
-	
-	    if (template.getDocumentation() instanceof ModuleElementDocumentation elemDoc) {
-	        DocComment parsed = DocCommentParser.parse(bodyValue(elemDoc.getBody()));
-	        description = parsed.description();
-	        deprecated  = parsed.tag("deprecated");
-	        see         = parsed.tag("see");
-	        author      = parsed.tag("author");
-	        version     = parsed.tag("version");
-	        params = correlateParams(
-	                template.getParameters(),
-	                elemDoc.getParameterDocumentation());
-	    } else {
-	        params = undocumentedParams(template.getParameters());
-	    }
-	
-	    return TemplateDoc.builder()
-	            .name(template.getName())
-	            .visibility(template.getVisibility() != null
-	                    ? template.getVisibility().getLiteral() : "public")
-	            .description(description)
-	            .params(params)
-	            .deprecated(deprecated)
-	            .see(see)
-	            .author(author)
-	            .version(version)
-	            .main(template.isMain())
-	            .override(false)         // Template has no getOverrides() in this API version
-	            .build();
-	}
+    private TemplateDoc extractTemplate(Template template) {
+        String description = "";
+        String deprecated  = null;
+        String see         = null;
+        String author      = null;
+        String version     = null;
+        List<ParamDoc> params;
+
+        if (template.getDocumentation() instanceof ModuleElementDocumentation elemDoc) {
+            DocComment parsed = DocCommentParser.parse(bodyValue(elemDoc.getBody()));
+            description = parsed.description();
+            deprecated  = parsed.tag("deprecated");
+            see         = parsed.tag("see");
+            author      = parsed.tag("author");
+            version     = parsed.tag("version");
+            // @param documentation is carried by ParameterDocumentation nodes,
+            // correlated to parameters by position
+            params = correlateParams(
+                    template.getParameters(),
+                    elemDoc.getParameterDocumentation());
+        } else {
+            params = undocumentedParams(template.getParameters());
+        }
+
+        return TemplateDoc.builder()
+                .name(template.getName())
+                .visibility(template.getVisibility() != null
+                        ? template.getVisibility().getLiteral() : "public")
+                .description(description)
+                .params(params)
+                .deprecated(deprecated)
+                .see(see)
+                .author(author)
+                .version(version)
+                .main(template.isMain())
+                .override(false)
+                .build();
+    }
+
     // -------------------------------------------------------------------------
     // Query extraction
     // -------------------------------------------------------------------------
@@ -253,7 +258,8 @@ public class DocExtractor {
         if (query.getDocumentation() instanceof ModuleElementDocumentation elemDoc) {
             DocComment parsed = DocCommentParser.parse(bodyValue(elemDoc.getBody()));
             description       = parsed.description();
-            returnDescription = parsed.tag("return") != null ? parsed.tag("return") : "";
+            returnDescription = parsed.tag("return") != null
+                    ? parsed.tag("return") : "";
             deprecated        = parsed.tag("deprecated");
             see               = parsed.tag("see");
             author            = parsed.tag("author");
@@ -268,10 +274,10 @@ public class DocExtractor {
         return QueryDoc.builder()
                 .name(query.getName())
                 .visibility(query.getVisibility() != null
-                        ? query.getVisibility().getName() : "public")
+                        ? query.getVisibility().getLiteral() : "public")
                 .description(description)
                 .params(params)
-                .returnType(query.getType() != null ? query.getType().toString() : "")
+                .returnType(typeString(query))
                 .returnDescription(returnDescription)
                 .deprecated(deprecated)
                 .see(see)
@@ -289,9 +295,8 @@ public class DocExtractor {
      * {@link ParameterDocumentation} nodes by position.
      *
      * <p>The i-th {@link ParameterDocumentation} in
-     * {@link ModuleElementDocumentation#getParameterDocumentation()} corresponds
-     * to the i-th parameter in the signature. Each carries its description text
-     * in {@code getBody().getValue()}.</p>
+     * {@link ModuleElementDocumentation#getParameterDocumentation()}
+     * corresponds to the i-th parameter in the signature.</p>
      */
     private List<ParamDoc> correlateParams(List<Variable> variables,
                                             List<ParameterDocumentation> paramDocs) {
@@ -317,6 +322,127 @@ public class DocExtractor {
     }
 
     // -------------------------------------------------------------------------
+    // Type extraction
+    // -------------------------------------------------------------------------
+
+    /**
+     * Extracts the human-readable type string from any {@link TypedElement}.
+     *
+     * <p>Accepts both {@link Variable} (parameter types) and {@link Query}
+     * (return types) since both extend {@link TypedElement}.
+     * {@link TypedElement#getType()} returns an
+     * {@link org.eclipse.acceleo.query.parser.AstResult} whose root
+     * expression is walked by {@link #extractTypeFromExpression}.</p>
+     */
+    private String typeString(TypedElement element) {
+        if (element == null) return "";
+        org.eclipse.acceleo.query.parser.AstResult astResult = element.getType();
+        if (astResult == null) return "";
+        return extractTypeFromExpression(astResult.getAst());
+    }
+
+    /**
+     * Recursively walks an AQL {@link org.eclipse.acceleo.query.ast.Expression}
+     * to find a type literal node and returns its human-readable type name.
+     *
+     * <p>Node types handled:</p>
+     * <ul>
+     *   <li>{@link org.eclipse.acceleo.query.ast.CollectionTypeLiteral} —
+     *       checked first because it extends
+     *       {@link org.eclipse.acceleo.query.ast.ClassTypeLiteral}.
+     *       In Acceleo 4.x only {@code OrderedSet} (java.util.Set) and
+     *       {@code Sequence} (java.util.List) exist.
+     *       Element type resolved recursively via {@code getElementType()}.</li>
+     *   <li>{@link org.eclipse.acceleo.query.ast.EClassifierTypeLiteral} —
+     *       EMF types such as {@code uml::Model}. Package and classifier
+     *       name available as plain strings.</li>
+     *   <li>{@link org.eclipse.acceleo.query.ast.ClassTypeLiteral} —
+     *       AQL primitive types: {@code String}, {@code Boolean},
+     *       {@code Integer}, {@code Real}.</li>
+     * </ul>
+     */
+    private String extractTypeFromExpression(
+            org.eclipse.acceleo.query.ast.Expression expr) {
+        if (expr == null) return "";
+
+        // CollectionTypeLiteral must be checked before ClassTypeLiteral
+        // because it extends ClassTypeLiteral
+        if (expr instanceof org.eclipse.acceleo.query.ast.CollectionTypeLiteral col) {
+            String collectionKind = collectionKind(col.getValue());
+            org.eclipse.acceleo.query.ast.TypeLiteral elementTypeLiteral =
+                    col.getElementType();
+            String elementType = elementTypeLiteral != null
+                    ? extractTypeFromExpression(
+                            (org.eclipse.acceleo.query.ast.Expression) elementTypeLiteral)
+                    : "";
+            if (!elementType.isBlank()) {
+                return collectionKind + "(" + elementType + ")";
+            }
+            return collectionKind;
+        }
+
+        // EMF classifier type — e.g. uml::Model, uml::NamedElement
+        if (expr instanceof org.eclipse.acceleo.query.ast.EClassifierTypeLiteral lit) {
+            String pkg  = lit.getEPackageName();
+            String name = lit.getEClassifierName();
+            if (pkg != null && !pkg.isBlank()) {
+                return pkg + "::" + name;
+            }
+            return name != null ? name : "";
+        }
+
+        // Java/AQL primitive type — e.g. String, Boolean, Integer, Real
+        if (expr instanceof org.eclipse.acceleo.query.ast.ClassTypeLiteral lit) {
+            Class<?> value = lit.getValue();
+            if (value != null) {
+                return mapJavaToAqlName(value.getSimpleName());
+            }
+        }
+
+        // Recurse into sub-expressions as fallback
+        for (org.eclipse.emf.ecore.EObject child : expr.eContents()) {
+            if (child instanceof org.eclipse.acceleo.query.ast.Expression childExpr) {
+                String found = extractTypeFromExpression(childExpr);
+                if (!found.isBlank()) return found;
+            }
+        }
+
+        return "";
+    }
+
+    /**
+     * Maps the Java interface used internally by Acceleo 4.x to the
+     * corresponding AQL collection kind name.
+     *
+     * <p>In Acceleo 4.x only two collection types exist:</p>
+     * <ul>
+     *   <li>{@code OrderedSet} — represented as {@code java.util.Set}</li>
+     *   <li>{@code Sequence}   — represented as {@code java.util.List}</li>
+     * </ul>
+     */
+    private String collectionKind(Class<?> javaClass) {
+        if (javaClass == null) return "Collection";
+        return switch (javaClass.getSimpleName()) {
+            case "Set"  -> "OrderedSet";
+            case "List" -> "Sequence";
+            default     -> javaClass.getSimpleName();
+        };
+    }
+
+    /**
+     * Maps Java simple class names to their AQL equivalents where they differ.
+     */
+    private String mapJavaToAqlName(String javaSimpleName) {
+        return switch (javaSimpleName) {
+            case "Double"  -> "Real";
+            case "Integer" -> "Integer";
+            case "String"  -> "String";
+            case "Boolean" -> "Boolean";
+            default        -> javaSimpleName;
+        };
+    }
+
+    // -------------------------------------------------------------------------
     // Utility helpers
     // -------------------------------------------------------------------------
 
@@ -330,56 +456,6 @@ public class DocExtractor {
         return value != null ? value.strip() : "";
     }
 
-    /**
-     * Extracts the human-readable type string from a {@link Variable}.
-     *
-     * <p>In the Acceleo 4.x AQL AST, {@link TypedElement#getType()} returns
-     * an {@link AstResult} whose root expression is an
-     * {@link EClassifierTypeLiteral} for concrete types like {@code uml::Model}.
-     * That node carries the package and classifier names as plain strings via
-     * {@link EClassifierTypeLiteral#getEPackageName()} and
-     * {@link EClassifierTypeLiteral#getEClassifierName()}.</p>
-     */
-    private String typeString(Variable var) {
-        if (var == null) return "";
-        org.eclipse.acceleo.query.parser.AstResult astResult = var.getType();
-        if (astResult == null) return "";
-        return extractTypeFromExpression(astResult.getAst());
-    }
-
-    /**
-     * Recursively walks an AQL {@link org.eclipse.acceleo.query.ast.Expression}
-     * to find an {@link EClassifierTypeLiteral} and returns its qualified name.
-     *
-     * <p>For a simple type like {@code uml::Model} the root expression is
-     * directly an {@link EClassifierTypeLiteral} with
-     * {@code getEPackageName() = "uml"} and
-     * {@code getEClassifierName() = "Model"}, producing {@code "uml::Model"}.</p>
-     */
-    private String extractTypeFromExpression(
-            org.eclipse.acceleo.query.ast.Expression expr) {
-        if (expr == null) return "";
-
-        if (expr instanceof org.eclipse.acceleo.query.ast.EClassifierTypeLiteral lit) {
-            String pkg  = lit.getEPackageName();
-            String name = lit.getEClassifierName();
-            if (pkg != null && !pkg.isBlank()) {
-                return pkg + "::" + name;
-            }
-            return name != null ? name : "";
-        }
-
-        // Recurse into sub-expressions for collection types e.g. Sequence(uml::Class)
-        for (org.eclipse.emf.ecore.EObject child : expr.eContents()) {
-            if (child instanceof org.eclipse.acceleo.query.ast.Expression childExpr) {
-                String found = extractTypeFromExpression(childExpr);
-                if (!found.isBlank()) return found;
-            }
-        }
-
-        return "";
-    }
-    
     /** Returns null if the string is null or blank, otherwise the string itself. */
     private String nullIfBlank(String s) {
         return (s == null || s.isBlank()) ? null : s;
@@ -414,17 +490,4 @@ public class DocExtractor {
         }
         return path.replace("/", "::");
     }
-//    private String deriveQualifiedName(String relativePath) {
-//        String path = relativePath.replace(File.separatorChar, '/');
-//        for (String prefix : List.of("src/", "source/", "templates/")) {
-//            if (path.startsWith(prefix)) {
-//                path = path.substring(prefix.length());
-//                break;
-//            }
-//        }
-//        if (path.endsWith(".mtl")) {
-//            path = path.substring(0, path.length() - 4);
-//        }
-//        return path.replace('/', ':').replace(':', ':');
-//    }
 }
