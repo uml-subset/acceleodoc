@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: acceleodoc CLI
 Bundle-SymbolicName: acceleodoc.cli;singleton:=true
-Bundle-Version: 1.0.0.202605271150
+Bundle-Version: 1.0.0.202606121950
 Bundle-Vendor: UCMIS
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: acceleodoc.cli
