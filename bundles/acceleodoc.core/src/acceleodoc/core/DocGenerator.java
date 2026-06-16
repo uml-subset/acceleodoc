@@ -56,25 +56,47 @@ public class DocGenerator {
      * @return number of modules documented
      */
     public int generate(Path sourceRoot, Path outputDir) throws IOException {
-        System.out.println("[acceleodoc] Scanning for .mtl files in: "
-                + sourceRoot.toAbsolutePath());
-        List<ModuleDoc> modules = extractor.extractAll(sourceRoot);
-
-        if (modules.isEmpty()) {
-            System.out.println("[acceleodoc] No .mtl files found — nothing to generate.");
-            return 0;
-        }
-
-        System.out.println("[acceleodoc] Found " + modules.size()
-                + " module(s). Rendering HTML...");
-        try {
-            renderer.render(modules, outputDir);
-        } catch (freemarker.template.TemplateException e) {
-            throw new IOException(
-                    "Freemarker template rendering failed: " + e.getMessage(), e);
-        }
-        return modules.size();
-    }
+	    System.out.println("[acceleodoc] Scanning for .mtl files in: "
+	            + sourceRoot.toAbsolutePath());
+	
+	    // Load link maps and wire them into the extractor
+	    renderer.loadLinkMaps(extractor);
+	
+	    List<ModuleDoc> modules = extractor.extractAll(sourceRoot);
+	    if (modules.isEmpty()) {
+	        System.out.println("[acceleodoc] No .mtl files found — nothing to generate.");
+	        return 0;
+	    }
+	    System.out.println("[acceleodoc] Found " + modules.size()
+	            + " module(s). Rendering HTML...");
+	    try {
+	        renderer.render(modules, outputDir);
+	    } catch (freemarker.template.TemplateException e) {
+	        throw new IOException(
+	                "Freemarker template rendering failed: " + e.getMessage(), e);
+	    }
+	    return modules.size();
+	}
+//    public int generate(Path sourceRoot, Path outputDir) throws IOException {
+//        System.out.println("[acceleodoc] Scanning for .mtl files in: "
+//                + sourceRoot.toAbsolutePath());
+//        List<ModuleDoc> modules = extractor.extractAll(sourceRoot);
+//
+//        if (modules.isEmpty()) {
+//            System.out.println("[acceleodoc] No .mtl files found — nothing to generate.");
+//            return 0;
+//        }
+//
+//        System.out.println("[acceleodoc] Found " + modules.size()
+//                + " module(s). Rendering HTML...");
+//        try {
+//            renderer.render(modules, outputDir);
+//        } catch (freemarker.template.TemplateException e) {
+//            throw new IOException(
+//                    "Freemarker template rendering failed: " + e.getMessage(), e);
+//        }
+//        return modules.size();
+//    }
 //    public int generate(Path sourceRoot, Path outputDir)
 //            throws IOException, TemplateException {
 //

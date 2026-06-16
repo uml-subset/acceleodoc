@@ -34,7 +34,6 @@
         <setEntry value="com.jcraft.jsch@default:default"/>
         <setEntry value="com.sun.jna.platform@default:default"/>
         <setEntry value="com.sun.jna@default:default"/>
-        <setEntry value="jakarta.annotation-api*2.1.1@default:default"/>
         <setEntry value="jakarta.inject.jakarta.inject-api*2.0.1@default:default"/>
         <setEntry value="org.antlr.antlr4-runtime@default:default"/>
         <setEntry value="org.apache.ant@default:default"/>

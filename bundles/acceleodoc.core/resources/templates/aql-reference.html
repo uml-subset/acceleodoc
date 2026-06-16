@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AQL Language Reference</title>
+    <style>
+        body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 14px;
+               color: #353833; max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+        h1 { font-size: 24px; color: #2c3e50; border-bottom: 2px solid #4a6782;
+             padding-bottom: 8px; margin: 32px 0 16px; }
+        h2 { font-size: 18px; color: #2c3e50; border-bottom: 1px solid #dee3e9;
+             padding-bottom: 4px; margin: 28px 0 12px; }
+        h3 { font-size: 15px; color: #2c3e50; margin: 20px 0 8px;
+             padding: 6px 10px; background: #f0f4f8;
+             border-left: 3px solid #4a6782; border-radius: 0 4px 4px 0; }
+        p  { margin-bottom: 10px; line-height: 1.6; }
+        code, pre { font-family: 'DejaVu Sans Mono', Consolas, monospace;
+                    font-size: 13px; background: #f5f5f5;
+                    border-radius: 3px; padding: 1px 4px; }
+        pre { padding: 10px 14px; overflow-x: auto; margin-bottom: 12px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; font-size: 13px; }
+        th { background: #dee3e9; padding: 6px 10px; text-align: left;
+             border-bottom: 2px solid #4a6782; }
+        td { padding: 5px 10px; border-bottom: 1px solid #eee; }
+        tr:hover td { background: #f5f8fb; }
+        a { color: #4a6782; }
+        .back { font-size: 13px; margin-bottom: 24px; }
+        .attribution { margin-top: 40px; padding-top: 16px; border-top: 1px solid #eee;
+                       font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+
+<p class="back"><a href="index.html">← Back to documentation</a></p>
+
+<h1>AQL Language Reference</h1>
+
+<p>This is a local copy of the
+<a href="https://eclipse.dev/acceleo/documentation/" target="_blank">Acceleo Query Language documentation</a>
+with injected anchors for use by acceleodoc cross-reference links.</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     Services available for all types (Object)
+     ═══════════════════════════════════════════════════════ -->
+<h2 id="object-services">Services available for all types</h2>
+
+<h3 id="object-add">Object + String : String</h3>
+<p>Returns the concatenation of the current object (as a String) and the given string.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>'times ' + 42</code></td><td><code>'times 42'</code></td></tr></table>
+
+<h3 id="object-differs">Object &lt;&gt; Object : Boolean</h3>
+<p>Indicates whether the two objects are different.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>'Hello' &lt;&gt; 'World'</code></td><td><code>true</code></td></tr>
+<tr><td><code>'Hello' &lt;&gt; 'Hello'</code></td><td><code>false</code></td></tr></table>
+
+<h3 id="object-equals">Object = Object : Boolean</h3>
+<p>Indicates whether the two objects are equal.</p>
+
+<h3 id="object-oclastype">Object.oclAsType(Object) : Object</h3>
+<p>Casts the current object to the given type. Contrary to Acceleo 3, the type is ignored and the object is returned directly.</p>
+
+<h3 id="object-ocliskindof">Object.oclIsKindOf(Object) : Boolean</h3>
+<p>Evaluates to <code>true</code> if the type of the object conforms to the type <em>classifier</em> — that is, o1 is of type <em>classifier</em> or a subtype of it.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>anEPackage.oclIsKindOf(ecore::EPackage)</code></td><td><code>true</code></td></tr>
+<tr><td><code>anEPackage.oclIsKindOf(ecore::ENamedElement)</code></td><td><code>true</code></td></tr></table>
+
+<h3 id="object-oclisof">Object.oclIsTypeOf(Object) : Boolean</h3>
+<p>Evaluates to <code>true</code> if the object is of exactly the type <em>classifier</em>, not a subtype.</p>
+
+<h3 id="object-tostring">Object.toString() : String</h3>
+<p>Returns a string representation of the current object.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>42.toString()</code></td><td><code>'42'</code></td></tr></table>
+
+<h3 id="object-trace">Object.trace() : String</h3>
+<p>Returns a string representation of the current AQL evaluation environment.</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     Boolean services
+     ═══════════════════════════════════════════════════════ -->
+<h2 id="boolean-services">Services available for Booleans</h2>
+
+<h3 id="boolean-and">Boolean.and(Boolean) : Boolean</h3>
+<p>Logical and.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>true and false</code></td><td><code>false</code></td></tr>
+<tr><td><code>true and true</code></td><td><code>true</code></td></tr></table>
+
+<h3 id="boolean-implies">Boolean.implies(Boolean) : Boolean</h3>
+<p>Logical implies.</p>
+
+<h3 id="boolean-not">Boolean.not() : Boolean</h3>
+<p>Logical negation.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>not true</code></td><td><code>false</code></td></tr></table>
+
+<h3 id="boolean-or">Boolean.or(Boolean) : Boolean</h3>
+<p>Logical or.</p>
+
+<h3 id="boolean-xor">Boolean.xor(Boolean) : Boolean</h3>
+<p>Logical exclusive or.</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     Collection services
+     ═══════════════════════════════════════════════════════ -->
+<h2 id="collection-services">Services available for Collections</h2>
+
+<h3 id="collection-any">Collection-&gt;any( x | ... ) : Object</h3>
+<p>Gets the first element for which the lambda evaluates to <code>true</code>.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;any(str | str.size() = 1)</code></td><td><code>'a'</code></td></tr></table>
+
+<h3 id="collection-asorderedset">Collection-&gt;asOrderedSet() : OrderedSet</h3>
+<p>Returns an OrderedSet representation of the collection.</p>
+
+<h3 id="collection-assequence">Collection-&gt;asSequence() : Sequence</h3>
+<p>Returns a Sequence representation of the collection.</p>
+
+<h3 id="collection-asset">Collection-&gt;asSet() : OrderedSet</h3>
+<p>Returns a set representation, removing duplicates.</p>
+
+<h3 id="collection-at">Sequence-&gt;at(Integer) : Object</h3>
+<p>Returns the element at the specified position (1-based index).</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;at(1)</code></td><td><code>'a'</code></td></tr></table>
+
+<h3 id="collection-collect">Collection-&gt;collect( x | ... ) : Collection</h3>
+<p>Returns a collection containing the result of applying the lambda on all elements, maintaining order.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;collect(str | str.toUpper())</code></td><td><code>Sequence{'A','B','C'}</code></td></tr></table>
+
+<h3 id="collection-concat">Collection-&gt;concat(Collection) : Collection</h3>
+<p>Returns the concatenation of the current collection with the given collection.</p>
+
+<h3 id="collection-count">Collection-&gt;count(Object) : Integer</h3>
+<p>Returns the number of occurrences of the given object in the collection.</p>
+
+<h3 id="collection-excludes">Collection-&gt;excludes(Object) : Boolean</h3>
+<p>Indicates if the collection does not contain the given object.</p>
+
+<h3 id="collection-excludesall">Collection-&gt;excludesAll(Collection) : Boolean</h3>
+<p>Indicates if no elements from the second collection are in the first.</p>
+
+<h3 id="collection-excluding">Collection-&gt;excluding(Object) : Collection</h3>
+<p>Returns the collection with the given object removed.</p>
+
+<h3 id="collection-exists">Collection-&gt;exists( x | ... ) : Boolean</h3>
+<p>Indicates if there exists an element for which the lambda evaluates to <code>true</code>.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;exists(str | str.size() &gt; 5)</code></td><td><code>false</code></td></tr></table>
+
+<h3 id="collection-filter">Collection-&gt;filter(EClassifier) : Collection</h3>
+<p>Keeps only instances of the given EClassifier.</p>
+
+<h3 id="collection-first">Collection-&gt;first() : Object</h3>
+<p>Returns the first element of the collection.</p>
+
+<h3 id="collection-forall">Collection-&gt;forAll( x | ... ) : Boolean</h3>
+<p>Indicates if all elements validate the given lambda.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;forAll(str | str.size() = 1)</code></td><td><code>true</code></td></tr></table>
+
+<h3 id="collection-includes">Collection-&gt;includes(Object) : Boolean</h3>
+<p>Indicates if the collection contains the given object.</p>
+
+<h3 id="collection-includesall">Collection-&gt;includesAll(Collection) : Boolean</h3>
+<p>Indicates if all elements of the second collection are in the first.</p>
+
+<h3 id="collection-including">Collection-&gt;including(Object) : Collection</h3>
+<p>Returns the collection with the given object added.</p>
+
+<h3 id="collection-indexof">Collection-&gt;indexOf(Object) : Integer</h3>
+<p>Returns the index of the given object (1-based).</p>
+
+<h3 id="collection-insertat">Collection-&gt;insertAt(Integer, Object) : Collection</h3>
+<p>Inserts the given object at the given position.</p>
+
+<h3 id="collection-intersection">Collection-&gt;intersection(Collection) : Collection</h3>
+<p>Returns elements present in both collections.</p>
+
+<h3 id="collection-isempty">Collection-&gt;isEmpty() : Boolean</h3>
+<p>Returns <code>true</code> when the collection is empty.</p>
+
+<h3 id="collection-isunique">Collection-&gt;isUnique( x | ... ) : Boolean</h3>
+<p>Indicates if the lambda gives a different value for all elements.</p>
+
+<h3 id="collection-last">Collection-&gt;last() : Object</h3>
+<p>Returns the last element of the collection.</p>
+
+<h3 id="collection-notempty">Collection-&gt;notEmpty() : Boolean</h3>
+<p>Returns <code>true</code> when the collection is not empty.</p>
+
+<h3 id="collection-one">Collection-&gt;one( x | ... ) : Boolean</h3>
+<p>Indicates if one and only one element validates the lambda.</p>
+
+<h3 id="collection-prepend">Collection-&gt;prepend(Object) : Collection</h3>
+<p>Inserts the given object at the first position.</p>
+
+<h3 id="collection-reject">Collection-&gt;reject( x | ... ) : Collection</h3>
+<p>Returns a filtered collection keeping only elements for which the lambda evaluates to <code>false</code>.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;reject(str | str.equals('a'))</code></td><td><code>Sequence{'b','c'}</code></td></tr></table>
+
+<h3 id="collection-reverse">Collection-&gt;reverse() : Collection</h3>
+<p>Returns the collection in reversed order.</p>
+
+<h3 id="collection-select">Collection-&gt;select( x | ... ) : Collection</h3>
+<p>Returns a filtered collection keeping only elements for which the lambda evaluates to <code>true</code>.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;select(str | str.equals('a'))</code></td><td><code>Sequence{'a'}</code></td></tr></table>
+
+<h3 id="collection-sep">Collection-&gt;sep(Object) : Sequence</h3>
+<p>Inserts the given separator between each element of the collection.</p>
+
+<h3 id="collection-size">Collection-&gt;size() : Integer</h3>
+<p>Returns the number of elements in the collection.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'a','b','c'}-&gt;size()</code></td><td><code>3</code></td></tr></table>
+
+<h3 id="collection-sortedby">Collection-&gt;sortedBy( x | ... ) : Collection</h3>
+<p>Returns the collection ordered by the result of the lambda.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>Sequence{'aa','bbb','c'}-&gt;sortedBy(str | str.size())</code></td><td><code>Sequence{'c','aa','bbb'}</code></td></tr></table>
+
+<h3 id="collection-subsequence">Sequence-&gt;subSequence(Integer, Integer) : Sequence</h3>
+<p>Returns a subset of the sequence between the two given indices.</p>
+
+<h3 id="collection-subordered set">OrderedSet-&gt;subOrderedSet(Integer, Integer) : OrderedSet</h3>
+<p>Returns a subset of the ordered set between the two given indices.</p>
+
+<h3 id="collection-sum">Collection-&gt;sum() : Number</h3>
+<p>Sums elements of the collection.</p>
+
+<h3 id="collection-union">Collection-&gt;union(Collection) : Collection</h3>
+<p>Returns a collection containing all elements of both collections.</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     EObject services
+     ═══════════════════════════════════════════════════════ -->
+<h2 id="eobject-services">Services available for EObjects</h2>
+
+<h3 id="eclass-allinstances">EClass.allInstances() : Sequence{EObject}</h3>
+<p>Returns all instances of the EClass.</p>
+
+<h3 id="eobject-eallcontents">EObject.eAllContents() : Sequence{EObject}</h3>
+<p>Returns a sequence of all EObjects recursively contained in the root eObject.</p>
+
+<h3 id="eobject-eclass">EObject.eClass() : EClass</h3>
+<p>Returns the EClass (metaclass) of the specified EObject.</p>
+
+<h3 id="eobject-econtainer">EObject.eContainer() : EObject</h3>
+<p>Returns the container (parent) of the specified EObject.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>firstEAttribute.eContainer()</code></td><td><code>firstEClass</code></td></tr></table>
+
+<h3 id="eobject-econtainerorself">EObject.eContainerOrSelf(EClass) : EObject</h3>
+<p>Returns self or the first container matching the given type.</p>
+
+<h3 id="eobject-econtents">EObject.eContents() : Sequence{EObject}</h3>
+<p>Returns the direct children of the specified EObject.</p>
+
+<h3 id="eobject-ecrossreferences">EObject.eCrossReferences() : Object</h3>
+<p>Returns the list of all EObjects cross-referenced from the receiver.</p>
+
+<h3 id="eobject-eget">EObject.eGet(String) : Object</h3>
+<p>Fetches the value of the feature named <em>featureName</em> on the source object.</p>
+
+<h3 id="eobject-einverse">EObject.eInverse() : OrderedSet{EObject}</h3>
+<p>Returns the set containing the inverse references of this object.</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     String services
+     ═══════════════════════════════════════════════════════ -->
+<h2 id="string-services">Services available for Strings</h2>
+
+<h3 id="string-concat">String.concat(String) : String</h3>
+<p>Returns the concatenation of the current string and the given string. Equivalent to <code>+</code>.</p>
+
+<h3 id="string-contains">String.contains(String) : Boolean</h3>
+<p>Returns <code>true</code> if the current String contains the given string.</p>
+
+<h3 id="string-endswith">String.endsWith(String) : Boolean</h3>
+<p>Returns <code>true</code> if the current String ends with the given string.</p>
+
+<h3 id="string-equalsignorecase">String.equalsIgnoreCase(String) : Boolean</h3>
+<p>Returns <code>true</code> if the strings are equal ignoring case.</p>
+
+<h3 id="string-first">String.first(Integer) : String</h3>
+<p>Returns the first <em>n</em> characters of the string.</p>
+
+<h3 id="string-index">String.index(String) : Integer</h3>
+<p>Returns the index of the first occurrence of the substring (1-based), or -1.</p>
+
+<h3 id="string-isalpha">String.isAlpha() : Boolean</h3>
+<p>Returns <code>true</code> if the string consists only of alphabetical characters.</p>
+
+<h3 id="string-isalphanum">String.isAlphaNum() : Boolean</h3>
+<p>Returns <code>true</code> if the string consists only of alphanumeric characters.</p>
+
+<h3 id="string-last">String.last(Integer) : String</h3>
+<p>Returns the last <em>n</em> characters of the string.</p>
+
+<h3 id="string-lastindex">String.lastIndex(String) : Integer</h3>
+<p>Returns the index of the last occurrence of the substring (1-based), or -1.</p>
+
+<h3 id="string-matches">String.matches(String) : Boolean</h3>
+<p>Returns <code>true</code> if the string matches the given regular expression.</p>
+
+<h3 id="string-prefix">String.prefix(String) : String</h3>
+<p>Returns the current string prefixed with the given prefix.</p>
+
+<h3 id="string-replace">String.replace(String, String) : String</h3>
+<p>Replaces the first substring matching the regex with the replacement.</p>
+
+<h3 id="string-replaceall">String.replaceAll(String, String) : String</h3>
+<p>Replaces all substrings matching the regex with the replacement.</p>
+
+<h3 id="string-size">String.size() : Integer</h3>
+<p>Returns the length of the string.</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>'HelloWorld'.size()</code></td><td><code>10</code></td></tr></table>
+
+<h3 id="string-startswith">String.startsWith(String) : Boolean</h3>
+<p>Returns <code>true</code> if the string starts with the given string.</p>
+
+<h3 id="string-strcmp">String.strcmp(String) : Integer</h3>
+<p>Returns a negative, zero, or positive integer depending on alphabetical ordering.</p>
+
+<h3 id="string-strstr">String.strstr(String) : Boolean</h3>
+<p>Returns <code>true</code> if the given string is found in the current string.</p>
+
+<h3 id="string-substitute">String.substitute(String, String) : String</h3>
+<p>Substitutes the first occurrence of the substring with the replacement.</p>
+
+<h3 id="string-substituteall">String.substituteAll(String, String) : String</h3>
+<p>Substitutes all occurrences of the substring with the replacement.</p>
+
+<h3 id="string-substring">String.substring(Integer, Integer) : String</h3>
+<p>Returns the substring from <em>lower</em> to <em>upper</em> inclusive (1-based).</p>
+<table><tr><th>Expression</th><th>Result</th></tr>
+<tr><td><code>'HelloWorld'.substring(1, 5)</code></td><td><code>'Hello'</code></td></tr></table>
+
+<h3 id="string-tointeger">String.toInteger() : Integer</h3>
+<p>Returns the integer value of the string.</p>
+
+<h3 id="string-tolower">String.toLower() : String</h3>
+<p>Returns the string with all characters in lower case.</p>
+
+<h3 id="string-tolowerfirst">String.toLowerFirst() : String</h3>
+<p>Returns the string with the first character in lower case.</p>
+
+<h3 id="string-toreal">String.toReal() : Real</h3>
+<p>Returns the real value of the string.</p>
+
+<h3 id="string-toupper">String.toUpper() : String</h3>
+<p>Returns the string with all characters in upper case.</p>
+
+<h3 id="string-toupperfirst">String.toUpperFirst() : String</h3>
+<p>Returns the string with the first character in upper case.</p>
+
+<h3 id="string-tokenize">String.tokenize(String) : Sequence{String}</h3>
+<p>Splits the string using the given delimiter into a collection of strings.</p>
+
+<h3 id="string-trim">String.trim() : String</h3>
+<p>Trims leading and trailing whitespace from the string.</p>
+
+<div class="attribution">
+    Content adapted from the
+    <a href="https://eclipse.dev/acceleo/documentation/" target="_blank">
+    Acceleo Query Language documentation</a> — Eclipse Acceleo Project, Obeo.
+    Reproduced for local offline reference within acceleodoc-generated documentation.
+</div>
+
+</body>
+</html>

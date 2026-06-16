@@ -29,14 +29,12 @@
         <h1 class="page-title">Module Overview</h1>
         <p class="overview-summary">
             This documentation was generated from Acceleo 4.2 <code>.mtl</code> source files.
-            Each module below is a single <code>.mtl</code> file.
         </p>
 
         <table class="summary-table">
             <thead>
                 <tr>
                     <th>Module</th>
-                    <th>Source File</th>
                     <th>Templates</th>
                     <th>Queries</th>
                     <th>Description</th>
@@ -45,13 +43,22 @@
             <tbody>
                 <#list modules as mod>
                 <tr>
-                    <td><a href="${mod.htmlFileName}">${mod.qualifiedName}</a>
-                        <#if mod.isDeprecated()><span class="badge deprecated">Deprecated</span></#if>
+                    <td>
+                        <a href="${mod.htmlFileName}">${mod.qualifiedName}</a>
+                        <#if mod.isDeprecated()>
+                            <span class="badge deprecated">Deprecated</span>
+                        </#if>
+                        <br/><span class="source-path"><code>${mod.sourceFile}</code></span>
                     </td>
-                    <td class="source-path"><code>${mod.sourceFile}</code></td>
                     <td class="count">${mod.templates?size}</td>
                     <td class="count">${mod.queries?size}</td>
-                    <td><#if mod.hasDescription()>${mod.description?html}<#else><span class="no-doc">—</span></#if></td>
+                    <td>
+                        <#if mod.hasDescription()>
+                            ${mod.description?html}
+                        <#else>
+                            <span class="no-doc">—</span>
+                        </#if>
+                    </td>
                 </tr>
                 </#list>
             </tbody>
